@@ -1,0 +1,117 @@
+---
+title: "Motor Car Trend Analysis"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+mtcars$cyl <- factor(mtcars$cyl)
+mtcars$vs <- factor(mtcars$vs)
+mtcars$am <- factor(mtcars$am, labels = c("Automatic", "Manual"))
+mtcars$gear <- factor(mtcars$gear)
+mtcars$carb <- factor(mtcars$carb)
+```
+
+## Executive Summary
+
+The data extracted from the 1974 'Motor Trend' magazine is analysed to explore the relationship between the variables in the data set and the cars' efficiency, measured in miles per gallon (MPG). In particular the the analysis looks at:  
+  
+1. Whether an automatic or manual transmission better for MPG  
+2. Quantifying the MPG difference between automatic and manual transmissions
+
+Exploratory data analysis was conducted, followed by hypothesis testing, which confirmed that manual transimission is better than automatic for MPG. Both single and multivariate linear regression models were then created and the one with the highest adjusted R-squared value used to infer that MPG will increase by 1.81 mpg in cars with manual transmission compared to automatic transmission (adjusted by horse power, number of cylinders and weight).  
+
+## Exploratory Data Analysis
+  
+The mtcars data set is loaded and 5 of the variables transformed into factor variables to facilitate further analysis (see appendix).  
+  
+A violin plot of MPG for automatic and manual transmissions is then constructed (see appendix). It appears to show that automatic cars have a lower MPG than manual cars.  
+
+## Hypothesis Testing
+  
+The violin plot appears to show that automatic cars have lower MPG but it is possible that this is due to random chance - the sample could have happened to include a group of automatic cars with low MPG and a group of manual cars with high MPG. To test this a t-test was conducted.  
+  
+```{r}
+t.test(mpg ~ am, data= mtcars, var.equal = FALSE)$p.value
+```
+  
+The p-value from this t-test is very low so we reject the null hypothesis - manual cars have higher MPG than automatic, the confidence interval shows a 95% chance the difference is between 3.2 and 11.3 mpg.
+
+## Linear Regression
+  
+A single variable regression of the mpg variable against the am variable has an R^2 value of 0.36 and hence only accounts for 36% of the variance of the MPG variable.
+  
+```{r}
+summary(lm(mpg~am, mtcars))$r.squared
+```
+
+Using a multivariable regression may yield a higher R^2 value but I don't want to overfit by adding unnecessary variables. A stepwise selection method shows the best variables that best explain MPG.
+  
+```{r}
+summary(step(lm(mpg~., mtcars),trace = 0))$r.squared
+```
+  
+The stepwise selection shows that the best model for mpg includes the cyl, hp, wt and am variables (see appendix). The R^2 for this model is 0.87, so 87% of the variance in mpg is now explained by the model.
+  
+To confirm that the cyl, hp, wt variables are significant for predicting mpg we can compare the last two models using anova.
+  
+```{r}
+anova(lm(mpg~am,mtcars),lm(mpg~am+cyl+hp+wt,data=mtcars))$"Pr(>F)"[2]
+```
+
+The p-value from this anova test is very low so we reject the null hypothesis - the cyl hp and wt variables are significant for the predicting mpg.
+  
+We can draw the following conclusions:  
+  
+1. MPG will decrease by 3.03 and 2.16 mpg if the number of cylinders increases from 4 to 6 and 8 respectively (adjusted by hp, wt and am).  
+2. MPG will decrease by 0.03 mpg for every hp increase (adjusted by cyl, wt and am).  
+3. MPG wil decrease by 2.50 mpg for every 1000 lb of increase in weight (adjusted by cyl, wt and am).  
+4. MPG will increase by 1.81 mpg in cars with manual transmission compared to automatic transmission (adjusted by hp, cyl and wt).  
+  
+## Residual and Diagnostics
+  
+The regression diagnostic plots show that the residuals are normally distributed (see Residual vs Fitted and Normal Q-Q plots), have constant variance (see Scale-Location plot) and that no outliers are present as all values fall well within the 0.5 bands (see Residuals vs Leverage plot).
+  
+## Appendix
+
+### Exploratory Data Analysis
+
+```{r}
+data(mtcars)
+str(mtcars)
+mtcars$cyl <- factor(mtcars$cyl)
+mtcars$vs <- factor(mtcars$vs)
+mtcars$am <- factor(mtcars$am, labels = c("Automatic", "Manual"))
+mtcars$gear <- factor(mtcars$gear)
+mtcars$carb <- factor(mtcars$carb)
+```
+
+```{r}
+library(ggplot2)
+ggplot(mtcars, aes(y=mpg, x=am)) + geom_violin() + xlab("Transmission") + ylab("MPG")
+```
+
+### Hypothesis Testing
+```{r}
+t.test(mpg ~ am, data= mtcars, var.equal = FALSE)
+```
+
+### Linear Regression
+```{r}
+summary(lm(mpg~am, mtcars))
+```
+
+```{r}
+summary(step(lm(mpg~., mtcars),trace = 0))
+```
+
+```{r}
+anova(lm(mpg~am,mtcars),lm(mpg~am+cyl+hp+wt,data=mtcars))
+```
+
+### Residual and Diagnostics
+
+```{r}
+par(mfrow=c(2,2))
+plot(lm(mpg~am+cyl+hp+wt,data=mtcars))
+```
