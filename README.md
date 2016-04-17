@@ -1,4 +1,4 @@
-# MtCarsAnalysis
+# MtCars Database Analysis
 
 Data was extracted from the 1974 'Motor Trend' magazine and analysed to explore the relationship between the variables in the data set and the cars' efficiency, measured in miles per gallon (MPG). In particular the the analysis looks at:
 
